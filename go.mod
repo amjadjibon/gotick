@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/mum4k/termdash v0.20.0
 	github.com/spf13/cobra v1.10.2
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
@@ -23,5 +24,4 @@ require (
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 )
