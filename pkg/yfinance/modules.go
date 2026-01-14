@@ -105,6 +105,10 @@ const (
 	ModuleIndexTrend    = "indexTrend"
 	ModuleSectorTrend   = "sectorTrend"
 
+	// Fund modules
+	ModuleTopHoldings     = "topHoldings"
+	ModuleFundPerformance = "fundPerformance"
+
 	// Other
 	ModuleFuturesChain = "futuresChain"
 )
