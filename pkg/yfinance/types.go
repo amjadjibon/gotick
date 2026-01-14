@@ -555,13 +555,20 @@ type StreamMessage struct {
 	ID            string  `json:"id"`
 	Price         float64 `json:"price"`
 	Time          int64   `json:"time"`
+	Currency      string  `json:"currency"`
 	Exchange      string  `json:"exchange"`
 	QuoteType     int     `json:"quoteType"`
 	MarketHours   int     `json:"marketHours"`
 	ChangePercent float64 `json:"changePercent"`
 	Change        float64 `json:"change"`
-	Volume        int64   `json:"dayVolume"`
+	DayVolume     int64   `json:"dayVolume"`
 	DayHigh       float64 `json:"dayHigh"`
 	DayLow        float64 `json:"dayLow"`
-	PrevClose     float64 `json:"previousClose"`
+	PreviousClose float64 `json:"previousClose"`
+	Bid           float64 `json:"bid"`
+	BidSize       int64   `json:"bidSize"`
+	Ask           float64 `json:"ask"`
+	AskSize       int64   `json:"askSize"`
+	OpenPrice     float64 `json:"openPrice"`
+	ShortName     string  `json:"shortName"`
 }

@@ -18,11 +18,14 @@ type ClientOption func(*Client)
 
 // Client represents a Yahoo Finance API client with authentication
 type Client struct {
-	httpClient *http.Client
-	userAgent  string
-	crumb      string
-	crumbMu    sync.RWMutex
-	timeout    time.Duration
+	httpClient  *http.Client
+	userAgent   string
+	crumb       string
+	crumbMu     sync.RWMutex
+	timeout     time.Duration
+	retryConfig *RetryConfig
+	proxyConfig *ProxyConfig
+	rateLimiter *RateLimiter
 }
 
 // WithHTTPClient sets a custom HTTP client

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 // Stream represents a real-time WebSocket connection for streaming quotes
@@ -168,12 +169,12 @@ func (s *Stream) readLoop() {
 	}
 }
 
-// parseStreamMessage parses a WebSocket message
+// parseStreamMessage parses a WebSocket message using protobuf
 func parseStreamMessage(data []byte) (*StreamMessage, error) {
 	// Yahoo Finance sends base64-encoded protobuf messages
 	decoded, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
-		// Try parsing as JSON
+		// Try parsing as JSON fallback
 		var msg StreamMessage
 		if jsonErr := json.Unmarshal(data, &msg); jsonErr != nil {
 			return nil, fmt.Errorf("failed to parse message: %w", err)
@@ -181,16 +182,33 @@ func parseStreamMessage(data []byte) (*StreamMessage, error) {
 		return &msg, nil
 	}
 
-	// For protobuf, we'd need a proper protobuf decoder
-	// This is a simplified version that returns basic info
-	msg := &StreamMessage{}
-	if len(decoded) > 0 {
-		// Basic parsing - in production, use proper protobuf
-		if err := json.Unmarshal(decoded, msg); err != nil {
-			// Return empty message if can't parse
-			return msg, nil
-		}
+	// Parse using protobuf
+	pricingData := &PricingData{}
+	if err := proto.Unmarshal(decoded, pricingData); err != nil {
+		// Fallback to empty message if proto fails
+		return &StreamMessage{}, nil
 	}
+
+	// Convert PricingData to StreamMessage
+	msg := &StreamMessage{
+		ID:            pricingData.GetId(),
+		Price:         float64(pricingData.GetPrice()),
+		Time:          pricingData.GetTime(),
+		Currency:      pricingData.GetCurrency(),
+		Exchange:      pricingData.GetExchange(),
+		MarketHours:   int(pricingData.GetMarketHours()),
+		ChangePercent: float64(pricingData.GetChangePercent()),
+		DayVolume:     pricingData.GetDayVolume(),
+		DayHigh:       float64(pricingData.GetDayHigh()),
+		DayLow:        float64(pricingData.GetDayLow()),
+		Change:        float64(pricingData.GetChange()),
+		PreviousClose: float64(pricingData.GetPreviousClose()),
+		Bid:           float64(pricingData.GetBid()),
+		BidSize:       pricingData.GetBidSize(),
+		Ask:           float64(pricingData.GetAsk()),
+		AskSize:       pricingData.GetAskSize(),
+	}
+
 	return msg, nil
 }
 
