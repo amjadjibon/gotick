@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"context"
@@ -23,11 +23,20 @@ import (
 	"github.com/amjadjibon/gotick/pkg/yfinance"
 )
 
+// Options holds configuration options for the TUI
+type Options struct {
+	Symbol   string
+	Interval string
+	Range    string
+}
+
 // App holds the dashboard application state
 type App struct {
-	ctx           context.Context
-	cancel        context.CancelFunc
-	currentSymbol string
+	ctx             context.Context
+	cancel          context.CancelFunc
+	currentSymbol   string
+	currentInterval string
+	currentRange    string
 
 	// Widgets
 	input      *textinput.TextInput
@@ -36,12 +45,18 @@ type App struct {
 	marketText *text.Text
 	newsText   *text.Text
 	recBar     *barchart.BarChart
-	rangeDonut *donut.Donut // Changed from Gauge to Donut
+	rangeDonut *donut.Donut
 }
 
-func main() {
+func Run(opts Options) {
 	app := &App{
-		currentSymbol: "AAPL",
+		currentSymbol:   opts.Symbol,
+		currentInterval: opts.Interval,
+		currentRange:    opts.Range,
+	}
+
+	if app.currentSymbol == "" {
+		app.currentSymbol = "AAPL"
 	}
 
 	t, err := tcell.New()
@@ -115,6 +130,7 @@ func main() {
 			cell.ColorNumber(118),
 			cell.ColorYellow,
 			cell.ColorRed,
+			cell.ColorNumber(88),
 			cell.ColorNumber(88),
 		}),
 		barchart.ShowValues(),
@@ -286,7 +302,11 @@ func (app *App) updateDashboard() {
 	}
 
 	// 2. Update Chart (History)
-	history, err := t.History(app.ctx, yfinance.HistoryParams{Period: yfinance.Period1y, Interval: yfinance.Interval1d})
+	historyParams := yfinance.HistoryParams{
+		Period:   yfinance.Period(app.currentRange),
+		Interval: yfinance.Interval(app.currentInterval),
+	}
+	history, err := t.History(app.ctx, historyParams)
 	if err != nil {
 		// Log error to quote text just so user sees it
 		// qt.Write(fmt.Sprintf("\nHistory Error: %v", err))
