@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mum4k/termdash"
+	"github.com/mum4k/termdash/align"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
 	"github.com/mum4k/termdash/keyboard"
@@ -162,6 +163,7 @@ func Run(opts Options) {
 						container.SplitHorizontal(
 							container.Top(
 								container.PlaceWidget(app.input),
+								container.AlignHorizontal(align.HorizontalLeft),
 								container.Border(linestyle.Light),
 								container.BorderTitle(" Search "),
 							),
