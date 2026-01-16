@@ -170,7 +170,7 @@ func Run(opts Options) {
 								container.Border(linestyle.Light),
 								container.BorderTitle(" Price History (1 Year) "),
 							),
-							container.SplitPercent(20),
+							container.SplitFixed(3),
 						),
 					),
 					container.Right(
