@@ -103,3 +103,11 @@ func createRangeDonut() *donut.Donut {
 	}
 	return d
 }
+
+func createSettingsText() *text.Text {
+	t, err := text.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return t
+}

@@ -20,15 +20,25 @@ func createLayout(t terminalapi.Terminal, app *App) *container.Container {
 					container.Left(
 						container.SplitHorizontal(
 							container.Top(
-								container.PlaceWidget(app.input),
-								container.AlignHorizontal(align.HorizontalLeft),
-								container.Border(linestyle.Light),
-								container.BorderTitle(" Search "),
+								container.SplitVertical(
+									container.Left(
+										container.PlaceWidget(app.input),
+										container.AlignHorizontal(align.HorizontalLeft),
+										container.Border(linestyle.Light),
+										container.BorderTitle(" Search "),
+									),
+									container.Right(
+										container.PlaceWidget(app.settingsText),
+										container.Border(linestyle.Light),
+										container.BorderTitle(" Settings "),
+									),
+									container.SplitPercent(40),
+								),
 							),
 							container.Bottom(
 								container.PlaceWidget(app.lc),
 								container.Border(linestyle.Light),
-								container.BorderTitle(" Price History (1 Year) "),
+								container.BorderTitle(" Price History "),
 							),
 							container.SplitFixed(3),
 						),

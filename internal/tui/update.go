@@ -108,13 +108,47 @@ func (app *App) updateChart(t *yfinance.Ticker) {
 	app.lc.Series("min_bound", minLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
 	app.lc.Series("max_bound", maxLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
 
+	// Create X-axis labels based on time range
+	xLabels := make(map[int]string)
+	numBars := len(history.Bars)
+
+	// Track which months/days we've already labeled to avoid duplicates
+	lastMonth := -1
+	lastDay := -1
+
+	for i, bar := range history.Bars {
+		switch app.currentRange {
+		case "1y", "2y", "5y", "10y", "ytd", "max":
+			// For yearly ranges, show month numbers (1, 2, 3, ...)
+			month := int(bar.Timestamp.Month())
+			if month != lastMonth {
+				xLabels[i] = fmt.Sprintf("%d", month)
+				lastMonth = month
+			}
+		case "1mo", "3mo", "6mo":
+			// For monthly ranges, show day numbers (1, 5, 10, ...)
+			day := bar.Timestamp.Day()
+			if day != lastDay && (day == 1 || day%5 == 0) {
+				xLabels[i] = fmt.Sprintf("%d", day)
+				lastDay = day
+			}
+		case "1d", "5d":
+			// For daily ranges, show hours
+			hour := bar.Timestamp.Hour()
+			if i == 0 || i == numBars-1 || hour%2 == 0 {
+				xLabels[i] = bar.Timestamp.Format("15:04")
+			}
+		default:
+			// Fallback: show evenly distributed dates
+			if i == 0 || i == numBars/2 || i == numBars-1 {
+				xLabels[i] = bar.Timestamp.Format("01/02")
+			}
+		}
+	}
+
 	app.lc.Series("Price", prices,
 		linechart.SeriesCellOpts(cell.FgColor(cell.ColorYellow)),
-		linechart.SeriesXLabels(map[int]string{
-			0:                     history.Bars[0].Timestamp.Format("01/02"),
-			len(history.Bars) / 2: history.Bars[len(history.Bars)/2].Timestamp.Format("01/02"),
-			len(history.Bars) - 1: history.Bars[len(history.Bars)-1].Timestamp.Format("01/02"),
-		}),
+		linechart.SeriesXLabels(xLabels),
 	)
 }
 
