@@ -94,7 +94,7 @@ func (c *Client) doWithRetry(ctx context.Context, req *http.Request) (*http.Resp
 
 		// Check if we should retry based on status code
 		if shouldRetry(resp.StatusCode, config.RetryOnStatus) && attempt < config.MaxRetries {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			waitTime := calculateBackoff(backoff, config.MaxBackoff, config.Jitter)
 
 			// Check for Retry-After header
@@ -129,7 +129,7 @@ func calculateBackoff(base, max time.Duration, jitter float64) time.Duration {
 	if jitter > 0 {
 		// Add random jitter
 		jitterRange := float64(backoff) * jitter
-		backoff = time.Duration(float64(backoff) + (rand.Float64()*2-1)*jitterRange)
+		backoff = time.Duration(float64(backoff) + (rand.Float64()*2-1)*jitterRange) //nolint:gosec // G404: weak random is acceptable for jitter
 	}
 
 	return backoff

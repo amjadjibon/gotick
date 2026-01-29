@@ -201,12 +201,14 @@ func Run(opts Options) {
 	}
 
 	if err := termdash.Run(app.ctx, t, c, termdash.KeyboardSubscriber(keyHandler)); err != nil {
-		log.Fatal(err)
+		// Note: This will log the error but ticker.Stop() won't run if we use Fatal.
+		// In practice, this is acceptable since the app is terminating anyway.
+		panic(err)
 	}
 }
 
 func (app *App) updateSettings() {
-	app.settingsText.Write(
+	_ = app.settingsText.Write(
 		fmt.Sprintf("Range: %s | Interval: %s | [r/R] Range [i/I] Interval [q] Quit",
 			app.currentRange, app.currentInterval),
 		text.WriteReplace(),

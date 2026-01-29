@@ -14,7 +14,7 @@ import (
 func (app *App) updateDashboard() {
 	t, err := yfinance.NewTicker(app.currentSymbol)
 	if err != nil {
-		app.quoteText.Write(fmt.Sprintf("Error creating ticker: %v", err), text.WriteReplace())
+		_ = app.quoteText.Write(fmt.Sprintf("Error creating ticker: %v", err), text.WriteReplace())
 		return
 	}
 
@@ -28,8 +28,8 @@ func (app *App) updateDashboard() {
 func (app *App) updateQuote(t *yfinance.Ticker) {
 	quote, err := t.Quote(app.ctx)
 	if err != nil {
-		app.quoteText.Write(fmt.Sprintf("Error fetching quote: %v", err), text.WriteReplace())
-		app.rangeDonut.Percent(0)
+		_ = app.quoteText.Write(fmt.Sprintf("Error fetching quote: %v", err), text.WriteReplace())
+		_ = app.rangeDonut.Percent(0)
 		return
 	}
 
@@ -38,13 +38,13 @@ func (app *App) updateQuote(t *yfinance.Ticker) {
 		color = cell.ColorRed
 	}
 
-	app.quoteText.Write(fmt.Sprintf("%s (%s)\n", quote.Symbol, quote.ShortName), text.WriteReplace())
-	app.quoteText.Write(fmt.Sprintf("Price:  $%.2f\n", quote.RegularMarketPrice))
-	app.quoteText.Write(fmt.Sprintf("Change: $%.2f (%.2f%%)\n", quote.RegularMarketChange, quote.RegularMarketChangePercent), text.WriteCellOpts(cell.FgColor(color)))
-	app.quoteText.Write(fmt.Sprintf("Volume: %d\n", quote.RegularMarketVolume))
-	app.quoteText.Write(fmt.Sprintf("Cap:    $%.2f B\n", float64(quote.MarketCap)/1e9))
-	app.quoteText.Write(fmt.Sprintf("PE:     %.2f\n", quote.TrailingPE))
-	app.quoteText.Write(fmt.Sprintf("52w L/H: %.2f - %.2f\n", quote.FiftyTwoWeekLow, quote.FiftyTwoWeekHigh))
+	_ = app.quoteText.Write(fmt.Sprintf("%s (%s)\n", quote.Symbol, quote.ShortName), text.WriteReplace())
+	_ = app.quoteText.Write(fmt.Sprintf("Price:  $%.2f\n", quote.RegularMarketPrice))
+	_ = app.quoteText.Write(fmt.Sprintf("Change: $%.2f (%.2f%%)\n", quote.RegularMarketChange, quote.RegularMarketChangePercent), text.WriteCellOpts(cell.FgColor(color)))
+	_ = app.quoteText.Write(fmt.Sprintf("Volume: %d\n", quote.RegularMarketVolume))
+	_ = app.quoteText.Write(fmt.Sprintf("Cap:    $%.2f B\n", float64(quote.MarketCap)/1e9))
+	_ = app.quoteText.Write(fmt.Sprintf("PE:     %.2f\n", quote.TrailingPE))
+	_ = app.quoteText.Write(fmt.Sprintf("52w L/H: %.2f - %.2f\n", quote.FiftyTwoWeekLow, quote.FiftyTwoWeekHigh))
 
 	if quote.FiftyTwoWeekHigh > quote.FiftyTwoWeekLow {
 		percent := int(((quote.RegularMarketPrice - quote.FiftyTwoWeekLow) / (quote.FiftyTwoWeekHigh - quote.FiftyTwoWeekLow)) * 100)
@@ -54,9 +54,9 @@ func (app *App) updateQuote(t *yfinance.Ticker) {
 		if percent > 100 {
 			percent = 100
 		}
-		app.rangeDonut.Percent(percent)
+		_ = app.rangeDonut.Percent(percent)
 	} else {
-		app.rangeDonut.Percent(0)
+		_ = app.rangeDonut.Percent(0)
 	}
 }
 
@@ -105,8 +105,8 @@ func (app *App) updateChart(t *yfinance.Ticker) {
 		maxLine[i] = upperBound
 	}
 
-	app.lc.Series("min_bound", minLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
-	app.lc.Series("max_bound", maxLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
+	_ = app.lc.Series("min_bound", minLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
+	_ = app.lc.Series("max_bound", maxLine, linechart.SeriesCellOpts(cell.FgColor(cell.ColorBlack)))
 
 	// Create X-axis labels based on time range
 	xLabels := make(map[int]string)
@@ -146,7 +146,7 @@ func (app *App) updateChart(t *yfinance.Ticker) {
 		}
 	}
 
-	app.lc.Series("Price", prices,
+	_ = app.lc.Series("Price", prices,
 		linechart.SeriesCellOpts(cell.FgColor(cell.ColorYellow)),
 		linechart.SeriesXLabels(xLabels),
 	)
@@ -155,7 +155,7 @@ func (app *App) updateChart(t *yfinance.Ticker) {
 func (app *App) updateMarketSummary() {
 	indices, err := yfinance.GetMajorIndices(app.ctx)
 	if err != nil {
-		app.marketText.Write(fmt.Sprintf("Error: %v", err), text.WriteReplace())
+		_ = app.marketText.Write(fmt.Sprintf("Error: %v", err), text.WriteReplace())
 		return
 	}
 
@@ -175,30 +175,30 @@ func (app *App) updateMarketSummary() {
 			name = name[:15] + "..."
 		}
 
-		app.marketText.Write(fmt.Sprintf("%-18s %8.2f ", name, idx.RegularMarketPrice))
-		app.marketText.Write(fmt.Sprintf("%+6.2f%%\n", idx.RegularMarketChangePercent), text.WriteCellOpts(cell.FgColor(color)))
+		_ = app.marketText.Write(fmt.Sprintf("%-18s %8.2f ", name, idx.RegularMarketPrice))
+		_ = app.marketText.Write(fmt.Sprintf("%+6.2f%%\n", idx.RegularMarketChangePercent), text.WriteCellOpts(cell.FgColor(color)))
 	}
 }
 
 func (app *App) updateNews(t *yfinance.Ticker) {
 	news, err := t.News(app.ctx, 5)
 	if err != nil {
-		app.newsText.Write(fmt.Sprintf("Error: %v", err), text.WriteReplace())
+		_ = app.newsText.Write(fmt.Sprintf("Error: %v", err), text.WriteReplace())
 		return
 	}
 
 	app.newsText.Reset()
 	for _, item := range news {
-		app.newsText.Write(fmt.Sprintf("• %s\n", item.Title))
+		_ = app.newsText.Write(fmt.Sprintf("• %s\n", item.Title))
 		pubTime := time.Unix(item.PublishTime, 0)
-		app.newsText.Write(fmt.Sprintf("  %s - %s\n\n", item.Publisher, pubTime.Format("15:04 01/02")))
+		_ = app.newsText.Write(fmt.Sprintf("  %s - %s\n\n", item.Publisher, pubTime.Format("15:04 01/02")))
 	}
 }
 
 func (app *App) updateRecommendations(t *yfinance.Ticker) {
 	recs, err := t.Recommendations(app.ctx)
 	if err != nil || len(recs) == 0 {
-		app.recBar.Values([]int{0, 0, 0, 0, 0}, 10)
+		_ = app.recBar.Values([]int{0, 0, 0, 0, 0}, 10)
 		return
 	}
 
@@ -217,5 +217,5 @@ func (app *App) updateRecommendations(t *yfinance.Ticker) {
 		maxVal += 2
 	}
 
-	app.recBar.Values(vals, maxVal)
+	_ = app.recBar.Values(vals, maxVal)
 }

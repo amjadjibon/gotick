@@ -85,7 +85,7 @@ func (c *Client) authenticate(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cookies: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Then, get the crumb
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, CrumbURL, nil)
@@ -98,7 +98,7 @@ func (c *Client) authenticate(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get crumb: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to get crumb: status %d", resp.StatusCode)
@@ -172,7 +172,7 @@ func (c *Client) Get(ctx context.Context, endpoint string, params url.Values) ([
 	if err != nil {
 		return nil, &RequestError{Endpoint: endpoint, Method: "GET", Err: err}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -252,7 +252,7 @@ func (c *Client) Post(ctx context.Context, endpoint string, params url.Values, b
 	if err != nil {
 		return nil, &RequestError{Endpoint: endpoint, Method: "POST", Err: err}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -287,19 +287,19 @@ func (c *Client) Post(ctx context.Context, endpoint string, params url.Values, b
 var (
 	defaultClient     *Client
 	defaultClientOnce sync.Once
-	defaultClientErr  error
+	errDefaultClient  error
 )
 
 // getDefaultClient returns the default client, creating it if necessary
 func getDefaultClient() (*Client, error) {
 	defaultClientOnce.Do(func() {
-		defaultClient, defaultClientErr = NewClient()
+		defaultClient, errDefaultClient = NewClient()
 	})
-	return defaultClient, defaultClientErr
+	return defaultClient, errDefaultClient
 }
 
 // SetDefaultClient sets the package-level default client
 func SetDefaultClient(client *Client) {
 	defaultClient = client
-	defaultClientErr = nil
+	errDefaultClient = nil
 }

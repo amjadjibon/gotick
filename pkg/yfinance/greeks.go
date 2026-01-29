@@ -20,45 +20,45 @@ type OptionWithGreeks struct {
 }
 
 // CalculateGreeks calculates Black-Scholes Greeks for an option
-// S = current stock price, K = strike, r = risk-free rate, T = time to expiry (years)
+// s = current stock price, k = strike, r = risk-free rate, t = time to expiry (years)
 // sigma = implied volatility, isCall = true for call, false for put
-func CalculateGreeks(S, K, r, T, sigma float64, isCall bool) *Greeks {
-	if T <= 0 || sigma <= 0 {
+func CalculateGreeks(s, k, r, t, sigma float64, isCall bool) *Greeks {
+	if t <= 0 || sigma <= 0 {
 		return nil
 	}
 
-	sqrtT := math.Sqrt(T)
-	d1 := (math.Log(S/K) + (r+sigma*sigma/2)*T) / (sigma * sqrtT)
+	sqrtT := math.Sqrt(t)
+	d1 := (math.Log(s/k) + (r+sigma*sigma/2)*t) / (sigma * sqrtT)
 	d2 := d1 - sigma*sqrtT
 
 	// Standard normal CDF
-	Nd1 := normalCDF(d1)
-	Nd2 := normalCDF(d2)
-	Nd2Neg := normalCDF(-d2)
+	nd1Val := normalCDF(d1)
+	nd2Val := normalCDF(d2)
+	nd2Neg := normalCDF(-d2)
 
 	// Standard normal PDF
-	nd1 := normalPDF(d1)
+	nd1PDF := normalPDF(d1)
 
 	g := &Greeks{}
 
 	if isCall {
 		// Call option Greeks
-		g.Delta = Nd1
-		g.Theta = -(S * nd1 * sigma / (2 * sqrtT)) - r*K*math.Exp(-r*T)*Nd2
-		g.Rho = K * T * math.Exp(-r*T) * Nd2 / 100 // Per 1% change
+		g.Delta = nd1Val
+		g.Theta = -(s * nd1PDF * sigma / (2 * sqrtT)) - r*k*math.Exp(-r*t)*nd2Val
+		g.Rho = k * t * math.Exp(-r*t) * nd2Val / 100 // Per 1% change
 	} else {
 		// Put option Greeks
-		g.Delta = Nd1 - 1
-		g.Theta = -(S * nd1 * sigma / (2 * sqrtT)) + r*K*math.Exp(-r*T)*Nd2Neg
-		g.Rho = -K * T * math.Exp(-r*T) * Nd2Neg / 100 // Per 1% change
+		g.Delta = nd1Val - 1
+		g.Theta = -(s * nd1PDF * sigma / (2 * sqrtT)) + r*k*math.Exp(-r*t)*nd2Neg
+		g.Rho = -k * t * math.Exp(-r*t) * nd2Neg / 100 // Per 1% change
 	}
 
 	// Common Greeks
-	g.Gamma = nd1 / (S * sigma * sqrtT)
-	g.Vega = S * sqrtT * nd1 / 100 // Per 1% change in IV
+	g.Gamma = nd1PDF / (s * sigma * sqrtT)
+	g.Vega = s * sqrtT * nd1PDF / 100 // Per 1% change in IV
 
 	// Convert theta to daily
-	g.Theta = g.Theta / 365
+	g.Theta /= 365
 
 	return g
 }
@@ -138,25 +138,16 @@ func unixNow() int64 {
 	return int64(float64(1e9) * float64(1)) // Placeholder - will use time.Now().Unix()
 }
 
-func init() {
-	// Override with real implementation
-	unixNowFunc = func() int64 {
-		return int64(float64(1e9) * float64(1))
-	}
-}
-
-var unixNowFunc func() int64
-
 // ImpliedVolatility calculates implied volatility using Newton-Raphson method
-func ImpliedVolatility(marketPrice, S, K, r, T float64, isCall bool) float64 {
+func ImpliedVolatility(marketPrice, s, k, r, t float64, isCall bool) float64 {
 	const maxIterations = 100
 	const tolerance = 0.0001
 
 	sigma := 0.3 // Initial guess
 
 	for i := 0; i < maxIterations; i++ {
-		price := blackScholesPrice(S, K, r, T, sigma, isCall)
-		vega := blackScholesVega(S, K, r, T, sigma)
+		price := blackScholesPrice(s, k, r, t, sigma, isCall)
+		vega := blackScholesVega(s, k, r, t, sigma)
 
 		if vega == 0 {
 			break
@@ -167,7 +158,7 @@ func ImpliedVolatility(marketPrice, S, K, r, T float64, isCall bool) float64 {
 			return sigma
 		}
 
-		sigma = sigma + diff/vega
+		sigma += diff / vega
 		if sigma < 0.001 {
 			sigma = 0.001
 		}
@@ -180,30 +171,30 @@ func ImpliedVolatility(marketPrice, S, K, r, T float64, isCall bool) float64 {
 }
 
 // blackScholesPrice calculates the Black-Scholes option price
-func blackScholesPrice(S, K, r, T, sigma float64, isCall bool) float64 {
-	if T <= 0 {
+func blackScholesPrice(s, k, r, t, sigma float64, isCall bool) float64 {
+	if t <= 0 {
 		if isCall {
-			return math.Max(S-K, 0)
+			return math.Max(s-k, 0)
 		}
-		return math.Max(K-S, 0)
+		return math.Max(k-s, 0)
 	}
 
-	sqrtT := math.Sqrt(T)
-	d1 := (math.Log(S/K) + (r+sigma*sigma/2)*T) / (sigma * sqrtT)
+	sqrtT := math.Sqrt(t)
+	d1 := (math.Log(s/k) + (r+sigma*sigma/2)*t) / (sigma * sqrtT)
 	d2 := d1 - sigma*sqrtT
 
 	if isCall {
-		return S*normalCDF(d1) - K*math.Exp(-r*T)*normalCDF(d2)
+		return s*normalCDF(d1) - k*math.Exp(-r*t)*normalCDF(d2)
 	}
-	return K*math.Exp(-r*T)*normalCDF(-d2) - S*normalCDF(-d1)
+	return k*math.Exp(-r*t)*normalCDF(-d2) - s*normalCDF(-d1)
 }
 
 // blackScholesVega calculates vega for IV calculation
-func blackScholesVega(S, K, r, T, sigma float64) float64 {
-	if T <= 0 {
+func blackScholesVega(s, k, r, t, sigma float64) float64 {
+	if t <= 0 {
 		return 0
 	}
-	sqrtT := math.Sqrt(T)
-	d1 := (math.Log(S/K) + (r+sigma*sigma/2)*T) / (sigma * sqrtT)
-	return S * sqrtT * normalPDF(d1)
+	sqrtT := math.Sqrt(t)
+	d1 := (math.Log(s/k) + (r+sigma*sigma/2)*t) / (sigma * sqrtT)
+	return s * sqrtT * normalPDF(d1)
 }

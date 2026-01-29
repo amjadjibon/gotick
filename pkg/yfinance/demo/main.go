@@ -21,7 +21,7 @@ func main() {
 	// Create ticker
 	ticker, err := yfinance.NewTicker("AAPL")
 	if err != nil {
-		log.Fatalf("Failed to create ticker: %v", err)
+		panic(fmt.Sprintf("Failed to create ticker: %v", err))
 	}
 
 	// ===== BASIC DATA =====

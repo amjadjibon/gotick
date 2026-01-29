@@ -2,6 +2,7 @@ package yfinance
 
 import (
 	"context"
+	"errors"
 	"math"
 	"testing"
 	"time"
@@ -175,7 +176,7 @@ func TestNewTicker(t *testing.T) {
 // TestNewTickerEmpty tests empty symbol
 func TestNewTickerEmpty(t *testing.T) {
 	_, err := NewTicker("")
-	if err != ErrInvalidSymbol {
+	if !errors.Is(err, ErrInvalidSymbol) {
 		t.Errorf("Expected ErrInvalidSymbol, got %v", err)
 	}
 }

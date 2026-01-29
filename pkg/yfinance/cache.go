@@ -66,7 +66,7 @@ func NewCache(config CacheConfig) *Cache {
 
 	// Create disk cache directory if needed
 	if config.Type == CacheTypeDisk || config.Type == CacheTypeBoth {
-		os.MkdirAll(config.Directory, 0o755)
+		_ = os.MkdirAll(config.Directory, 0o755) //nolint:gosec // G301: 0755 permissions acceptable for user cache dir
 	}
 
 	return c
@@ -193,8 +193,8 @@ func (c *Cache) Clear() {
 	c.mu.Unlock()
 
 	if c.config.Type == CacheTypeDisk || c.config.Type == CacheTypeBoth {
-		os.RemoveAll(c.config.Directory)
-		os.MkdirAll(c.config.Directory, 0o755)
+		_ = os.RemoveAll(c.config.Directory)
+		_ = os.MkdirAll(c.config.Directory, 0o755) //nolint:gosec // G301: 0755 permissions acceptable for user cache dir
 	}
 }
 
@@ -218,7 +218,7 @@ func (c *Cache) evictOldest() {
 // getFromDisk retrieves a value from disk cache
 func (c *Cache) getFromDisk(key string) ([]byte, bool) {
 	path := filepath.Join(c.config.Directory, key+".json")
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is sanitized (cache directory)
 	if err != nil {
 		return nil, false
 	}
@@ -229,7 +229,7 @@ func (c *Cache) getFromDisk(key string) ([]byte, bool) {
 	}
 
 	if time.Now().After(entry.ExpiresAt) {
-		os.Remove(path)
+		_ = os.Remove(path)
 		return nil, false
 	}
 
@@ -243,13 +243,13 @@ func (c *Cache) saveToDisk(key string, entry *cacheEntry) {
 	if err != nil {
 		return
 	}
-	os.WriteFile(path, data, 0o644)
+	_ = os.WriteFile(path, data, 0o644) //nolint:gosec // G306: 0644 permissions acceptable for cache files
 }
 
 // deleteFromDisk removes a value from disk cache
 func (c *Cache) deleteFromDisk(key string) {
 	path := filepath.Join(c.config.Directory, key+".json")
-	os.Remove(path)
+	_ = os.Remove(path)
 }
 
 // CacheKey generates a cache key for API requests

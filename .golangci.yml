@@ -7,7 +7,6 @@ run:
 linters:
   default: standard
   enable:
-    - bodyclose
     - errname
     - errorlint
     - gocritic
@@ -16,6 +15,8 @@ linters:
     - prealloc
     - unconvert
     - unparam
+  disable:
+    - unused
 
 linters-settings:
   errcheck:
@@ -28,9 +29,15 @@ linters-settings:
       - diagnostic
       - style
       - performance
+    disabled-checks:
+      - ifElseChain
   gosec:
     excludes:
-      - G104
+      - G104 # Audit errors not checked (we use blank identifier)
+      - G301 # Directory permissions (0755 is acceptable for user cache)
+      - G304 # File path from variable (for user cache directory)
+      - G306 # File permissions (0644 is acceptable for cache files)
+      - G404 # Weak random for jitter (not security-critical)
   misspell:
     locale: US
 

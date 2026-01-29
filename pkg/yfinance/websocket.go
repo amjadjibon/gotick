@@ -53,7 +53,7 @@ func (s *Stream) Connect(ctx context.Context) error {
 	// Subscribe to symbols
 	if len(s.symbols) > 0 {
 		if err := s.subscribe(s.symbols); err != nil {
-			s.conn.Close()
+			_ = s.conn.Close()
 			s.running = false
 			return err
 		}

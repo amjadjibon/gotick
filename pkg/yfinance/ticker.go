@@ -97,6 +97,7 @@ func (t *Ticker) History(ctx context.Context, params HistoryParams) (*ChartData,
 	queryParams := url.Values{}
 
 	// Set period or date range
+	//nolint:gocritic // ifElseChain: if-else chain is clearer here
 	if !params.Start.IsZero() && !params.End.IsZero() {
 		queryParams.Set("period1", strconv.FormatInt(params.Start.Unix(), 10))
 		queryParams.Set("period2", strconv.FormatInt(params.End.Unix(), 10))
@@ -261,31 +262,31 @@ func (t *Ticker) Info(ctx context.Context, modules ...string) (*QuoteSummary, er
 	// Parse each module
 	if raw, ok := result["assetProfile"]; ok {
 		summary.AssetProfile = &AssetProfile{}
-		json.Unmarshal(raw, summary.AssetProfile)
+		_ = json.Unmarshal(raw, summary.AssetProfile)
 	}
 	if raw, ok := result["summaryProfile"]; ok {
 		summary.SummaryProfile = &SummaryProfile{}
-		json.Unmarshal(raw, summary.SummaryProfile)
+		_ = json.Unmarshal(raw, summary.SummaryProfile)
 	}
 	if raw, ok := result["summaryDetail"]; ok {
 		summary.SummaryDetail = &SummaryDetail{}
-		json.Unmarshal(raw, summary.SummaryDetail)
+		_ = json.Unmarshal(raw, summary.SummaryDetail)
 	}
 	if raw, ok := result["price"]; ok {
 		summary.Price = &PriceInfo{}
-		json.Unmarshal(raw, summary.Price)
+		_ = json.Unmarshal(raw, summary.Price)
 	}
 	if raw, ok := result["defaultKeyStatistics"]; ok {
 		summary.KeyStatistics = &KeyStatistics{}
-		json.Unmarshal(raw, summary.KeyStatistics)
+		_ = json.Unmarshal(raw, summary.KeyStatistics)
 	}
 	if raw, ok := result["financialData"]; ok {
 		summary.FinancialData = &FinancialData{}
-		json.Unmarshal(raw, summary.FinancialData)
+		_ = json.Unmarshal(raw, summary.FinancialData)
 	}
 	if raw, ok := result["calendarEvents"]; ok {
 		summary.CalendarEvents = &CalendarEvents{}
-		json.Unmarshal(raw, summary.CalendarEvents)
+		_ = json.Unmarshal(raw, summary.CalendarEvents)
 	}
 
 	return summary, nil
