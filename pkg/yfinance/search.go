@@ -104,7 +104,7 @@ func SearchWithClient(ctx context.Context, client *Client, query string, opts ..
 }
 
 // Lookup performs a symbol lookup
-func Lookup(ctx context.Context, query string, lookupType string) (*LookupResult, error) {
+func Lookup(ctx context.Context, query, lookupType string) (*LookupResult, error) {
 	if query == "" {
 		return nil, fmt.Errorf("query cannot be empty")
 	}
@@ -118,7 +118,7 @@ func Lookup(ctx context.Context, query string, lookupType string) (*LookupResult
 }
 
 // LookupWithClient performs lookup using a specific client
-func LookupWithClient(ctx context.Context, client *Client, query string, lookupType string) (*LookupResult, error) {
+func LookupWithClient(ctx context.Context, client *Client, query, lookupType string) (*LookupResult, error) {
 	params := url.Values{}
 	params.Set("query", query)
 	if lookupType != "" {

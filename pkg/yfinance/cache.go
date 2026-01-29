@@ -66,7 +66,7 @@ func NewCache(config CacheConfig) *Cache {
 
 	// Create disk cache directory if needed
 	if config.Type == CacheTypeDisk || config.Type == CacheTypeBoth {
-		os.MkdirAll(config.Directory, 0755)
+		os.MkdirAll(config.Directory, 0o755)
 	}
 
 	return c
@@ -194,7 +194,7 @@ func (c *Cache) Clear() {
 
 	if c.config.Type == CacheTypeDisk || c.config.Type == CacheTypeBoth {
 		os.RemoveAll(c.config.Directory)
-		os.MkdirAll(c.config.Directory, 0755)
+		os.MkdirAll(c.config.Directory, 0o755)
 	}
 }
 
@@ -243,7 +243,7 @@ func (c *Cache) saveToDisk(key string, entry *cacheEntry) {
 	if err != nil {
 		return
 	}
-	os.WriteFile(path, data, 0644)
+	os.WriteFile(path, data, 0o644)
 }
 
 // deleteFromDisk removes a value from disk cache
