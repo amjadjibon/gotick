@@ -272,3 +272,189 @@ func TestErrorTypes(t *testing.T) {
 		t.Error("Expected non-empty symbol error string")
 	}
 }
+
+// TestTickerSymbolNormalization tests that ticker symbol is uppercased
+func TestTickerSymbolNormalization(t *testing.T) {
+	ticker, err := NewTicker("aapl")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if ticker.Symbol != "AAPL" {
+		t.Errorf("Expected symbol AAPL, got %s", ticker.Symbol)
+	}
+}
+
+// TestTickerWithCustomClient tests ticker with custom client option
+func TestTickerWithCustomClient(t *testing.T) {
+	client, err := NewClient()
+	if err != nil {
+		t.Fatalf("Expected no error creating client, got %v", err)
+	}
+
+	ticker, err := NewTicker("MSFT", WithClient(client))
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if ticker.Symbol != "MSFT" {
+		t.Errorf("Expected symbol MSFT, got %s", ticker.Symbol)
+	}
+}
+
+// TestStreamCreation tests WebSocket stream creation
+func TestStreamCreation(t *testing.T) {
+	stream := NewStream([]string{"AAPL", "GOOGL"})
+
+	symbols := stream.Symbols()
+	if len(symbols) != 2 {
+		t.Errorf("Expected 2 symbols, got %d", len(symbols))
+	}
+
+	// Should not be connected yet since Connect() wasn't called
+	if stream.IsConnected() {
+		t.Error("Expected stream to not be connected before Connect()")
+	}
+}
+
+// TestStreamSymbolManagement tests stream subscribe/unsubscribe before connection
+func TestStreamSymbolManagement(t *testing.T) {
+	stream := NewStream([]string{})
+
+	err := stream.Subscribe("AAPL", "GOOGL")
+	if err != nil {
+		t.Errorf("Expected no error on subscribe before connect, got %v", err)
+	}
+
+	if len(stream.Symbols()) != 2 {
+		t.Errorf("Expected 2 symbols, got %d", len(stream.Symbols()))
+	}
+}
+
+// TestOptionChainWithGreeks tests option chain Greeks calculation
+func TestOptionChainWithGreeks(t *testing.T) {
+	chain := &OptionChain{
+		Symbol:          "AAPL",
+		UnderlyingPrice: 150.0,
+		Calls: []Option{
+			{Strike: 150, ImpliedVolatility: 0.25, Expiration: time.Now().Add(30 * 24 * time.Hour).Unix()},
+		},
+		Puts: []Option{
+			{Strike: 150, ImpliedVolatility: 0.25, Expiration: time.Now().Add(30 * 24 * time.Hour).Unix()},
+		},
+	}
+
+	withGreeks := chain.WithGreeks(0.05)
+
+	if len(withGreeks.Calls) != 1 {
+		t.Errorf("Expected 1 call, got %d", len(withGreeks.Calls))
+	}
+
+	if len(withGreeks.Puts) != 1 {
+		t.Errorf("Expected 1 put, got %d", len(withGreeks.Puts))
+	}
+}
+
+// TestCacheKeyGeneration tests cache key generation
+func TestCacheKeyGeneration(t *testing.T) {
+	params := map[string]string{"symbol": "AAPL", "modules": "price"}
+	key := CacheKey("quote", params)
+
+	if key == "" {
+		t.Error("Expected non-empty cache key")
+	}
+
+	// Same inputs should produce same key
+	key2 := CacheKey("quote", params)
+	if key != key2 {
+		t.Errorf("Expected same cache key, got %s vs %s", key, key2)
+	}
+
+	// Different inputs should produce different keys
+	params2 := map[string]string{"symbol": "GOOGL", "modules": "price"}
+	key3 := CacheKey("quote", params2)
+	if key == key3 {
+		t.Error("Expected different cache keys for different symbols")
+	}
+}
+
+// TestCacheClear tests cache clear operation
+func TestCacheClear(t *testing.T) {
+	cache := NewCache(CacheConfig{
+		Type:       CacheTypeMemory,
+		DefaultTTL: 1 * time.Minute,
+		MaxSize:    100,
+	})
+
+	cache.Set("key1", []byte("data1"), 0)
+	cache.Set("key2", []byte("data2"), 0)
+
+	cache.Clear()
+
+	_, ok := cache.Get("key1")
+	if ok {
+		t.Error("Expected cache miss after clear")
+	}
+}
+
+// TestRequestError tests request error type
+func TestRequestError(t *testing.T) {
+	reqErr := &RequestError{
+		Endpoint: "/test",
+		Method:   "GET",
+		Err:      errors.New("connection failed"),
+	}
+
+	errStr := reqErr.Error()
+	if errStr == "" {
+		t.Error("Expected non-empty error string")
+	}
+
+	// Test Unwrap
+	unwrapped := reqErr.Unwrap()
+	if unwrapped == nil {
+		t.Error("Expected non-nil unwrapped error")
+	}
+}
+
+// TestGreeksNilForInvalidInput tests Greeks returns nil for invalid inputs
+func TestGreeksNilForInvalidInput(t *testing.T) {
+	// Zero time to expiry
+	greeks := CalculateGreeks(150, 150, 0.05, 0, 0.25, true)
+	if greeks != nil {
+		t.Error("Expected nil Greeks for zero time to expiry")
+	}
+
+	// Negative time to expiry
+	greeks = CalculateGreeks(150, 150, 0.05, -0.1, 0.25, true)
+	if greeks != nil {
+		t.Error("Expected nil Greeks for negative time to expiry")
+	}
+
+	// Zero volatility
+	greeks = CalculateGreeks(150, 150, 0.05, 0.25, 0, true)
+	if greeks != nil {
+		t.Error("Expected nil Greeks for zero volatility")
+	}
+}
+
+// TestBlackScholesPriceEdgeCases tests edge cases in BS pricing
+func TestBlackScholesPriceEdgeCases(t *testing.T) {
+	// ITM call at expiry should be intrinsic value
+	price := blackScholesPrice(160, 150, 0.05, 0, 0.25, true)
+	if price != 10.0 {
+		t.Errorf("Expected ITM call price 10, got %f", price)
+	}
+
+	// OTM call at expiry should be 0
+	price = blackScholesPrice(140, 150, 0.05, 0, 0.25, true)
+	if price != 0 {
+		t.Errorf("Expected OTM call price 0, got %f", price)
+	}
+
+	// ITM put at expiry should be intrinsic value
+	price = blackScholesPrice(140, 150, 0.05, 0, 0.25, false)
+	if price != 10.0 {
+		t.Errorf("Expected ITM put price 10, got %f", price)
+	}
+}
